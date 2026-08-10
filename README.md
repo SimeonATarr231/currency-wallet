@@ -4,7 +4,7 @@ A currency converter with a split-flap "departure board" aesthetic — inspired 
 
 Designed & Built by **Simeon A. Tarr**
 
-🔗 **Live Demo:** _[Add live URL here once deployed to GitHub Pages]_
+🔗 **Live Demo:** _[[Add live URL here once deployed to GitHub Pages](https://simeonatarr231.github.io/sat-currency-converter/)]_
 
 ## Features
 
