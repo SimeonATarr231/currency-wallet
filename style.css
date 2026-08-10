@@ -1,0 +1,449 @@
+/* ============ CSS VARIABLES — NIGHT BOARD (default) ============ */
+:root {
+  --bg-color: #14171c;
+  --panel-color: #1f242c;
+  --tile-bg: #2a2f38;
+  --tile-text: #f5c242;
+  --text-color: #e8e6df;
+  --text-muted: #8b8f97;
+  --accent-color: #4fae8e;
+  --border-color: #333944;
+}
+
+/* ============ DAY BOARD ============ */
+body.day-mode {
+  --bg-color: #f0ece1;
+  --panel-color: #e4ddc9;
+  --tile-bg: #d9cfb0;
+  --tile-text: #3d2b1f;
+  --text-color: #2b2b2b;
+  --text-muted: #6b6558;
+  --accent-color: #8a6d3b;
+  --border-color: #cabf9e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Manrope", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.4s ease, color 0.4s ease;
+  padding: 24px 16px;
+}
+
+/* ============ BOARD CASING ============ */
+.board-casing {
+  width: 100%;
+  max-width: 640px;
+  background-color: var(--panel-color);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+/* ============ HEADER ============ */
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.board-header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  box-shadow: 0 0 6px var(--accent-color);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.live-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+
+/* ============ POWER SWITCH (Day/Night toggle) ============ */
+.power-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.power-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.power-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.power-icon {
+  position: absolute;
+  left: 4px;
+  font-size: 12px;
+  color: var(--tile-text);
+  transition: transform 0.3s ease;
+}
+
+.power-switch input:checked + .power-slider .power-icon {
+  transform: translateX(20px);
+}
+
+/* ============ PINNED ROW ============ */
+.pinned-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pinned-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.pinned-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pinned-chips .chip-pinned {
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.pinned-chips .chip-pinned:hover {
+  border-color: var(--accent-color);
+}
+
+.pin-btn {
+  background: none;
+  border: 1px dashed var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.pin-btn:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* ============ CONVERTER PANEL ============ */
+.converter-panel {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.currency-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 180px;
+}
+
+.currency-block label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.currency-block input {
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.95rem;
+}
+
+.currency-block input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.quick-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chip {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.swap-btn {
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+  font-size: 1.1rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: transform 0.2s ease;
+}
+
+.swap-btn:hover {
+  transform: rotate(180deg);
+}
+
+/* ============ STATUS ============ */
+.status-message {
+  text-align: center;
+  min-height: 18px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 4px 0 16px 0;
+}
+
+/* ============ FLIP BOARD ============ */
+.flip-board-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.flip-board {
+  display: flex;
+  gap: 4px;
+}
+
+.flip-tile {
+  width: 34px;
+  height: 52px;
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 200px;
+  overflow: hidden;
+}
+
+.flip-inner {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--tile-text);
+}
+
+.flip-tile.flipping .flip-inner {
+  animation: flipChar 300ms ease-in-out;
+}
+
+@keyframes flipChar {
+  0% { transform: rotateX(0deg); }
+  50% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0deg); }
+}
+
+.board-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.currency-code-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.copy-btn {
+  background-color: var(--tile-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 1rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent-color);
+}
+
+.copy-btn.copied {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+/* ============ TREND ============ */
+.trend-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.trend-title {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.sparkline {
+  flex: 1;
+  height: 32px;
+}
+
+.sparkline path {
+  fill: none;
+  stroke: var(--accent-color);
+  stroke-width: 2;
+}
+
+.trend-change {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.trend-change.up {
+  color: #4fae8e;
+}
+
+.trend-change.down {
+  color: #d9695f;
+}
+
+/* ============ FOOTER ============ */
+.app-footer {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 8px 0 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.app-footer strong {
+  color: var(--accent-color);
+}
+
+.footer-links {
+  display: flex;
+  gap: 14px;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--accent-color);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 500px) {
+  .converter-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .swap-btn {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+
+  .swap-btn:hover {
+    transform: rotate(270deg);
+  }
+
+  .flip-tile {
+    width: 26px;
+    height: 42px;
+  }
+
+  .flip-inner {
+    font-size: 1.2rem;
+  }
+}
