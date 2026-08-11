@@ -3,124 +3,195 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Currency Exchange Board</title>
+  <title>Currency Wallet</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=Manrope:wght@400;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500;700&family=Manrope:wght@400;600;700;800&display=swap"
     rel="stylesheet"
   />
 
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body class="night-mode">
 
-  <div class="board-casing">
+  <div class="page">
 
-    <!-- ===================== HEADER ===================== -->
-    <header class="board-header">
-      <h1>Currency Exchange</h1>
+    <!-- HEADER -->
+    <header class="page-header">
+      <div class="brand">
+        <i data-lucide="wallet" class="brand-icon"></i>
+        <h1>Currency Wallet</h1>
+      </div>
 
       <div class="header-right">
-        <span class="live-dot" title="Live rates"></span>
-        <span class="live-label">live rate</span>
+        <span class="live-indicator">
+          <span class="live-dot"></span>
+          <span id="lastUpdated" class="live-label">connecting…</span>
+        </span>
 
-        <!-- Day / Night power switch -->
-        <label class="power-switch" title="Toggle Day / Night board">
-          <input type="checkbox" id="themeToggle" />
-          <span class="power-slider">
-            <span class="power-icon">⏻</span>
-          </span>
-        </label>
+        <button id="themeToggle" class="theme-toggle" title="Toggle Day / Night" aria-label="Toggle theme">
+          <i data-lucide="sun" class="icon-sun"></i>
+          <i data-lucide="moon" class="icon-moon"></i>
+        </button>
       </div>
     </header>
 
-    <!-- ===================== PINNED PAIRS ===================== -->
+    <!-- ERROR BANNER -->
+    <div id="errorBanner" class="error-banner" hidden>
+      <i data-lucide="alert-triangle"></i>
+      <span id="errorText">Something went wrong.</span>
+      <button id="retryBtn" class="retry-btn">
+        <i data-lucide="refresh-cw"></i>
+        <span>Retry</span>
+      </button>
+    </div>
+
+    <!-- PINNED LOYALTY CHIPS -->
     <section class="pinned-row">
-      <span class="pinned-label">★ Pinned:</span>
+      <span class="pinned-label">
+        <i data-lucide="star"></i>
+        Pinned
+      </span>
       <div id="pinnedChips" class="pinned-chips"></div>
       <button id="pinCurrentBtn" class="pin-btn" title="Pin current pair">
-        + pin current
+        <i data-lucide="plus"></i>
+        <span>Pin current</span>
       </button>
     </section>
 
-    <!-- ===================== CONVERTER PANEL ===================== -->
-    <section class="converter-panel">
+    <!-- WALLET: CARD + TICKET -->
+    <section class="wallet">
 
-      <div class="currency-block">
-        <label for="fromAmount">Amount</label>
+      <!-- ---------- FROM: DEBIT CARD ---------- -->
+      <div class="debit-card">
+        <div class="card-top-row">
+          <div class="card-chip"></div>
+          <i data-lucide="credit-card" class="card-brand-icon"></i>
+        </div>
+
+        <label for="fromAmount" class="card-field-label">Amount</label>
         <input
           type="number"
           id="fromAmount"
+          class="card-amount-input"
           value="100"
           min="0"
           step="any"
+          inputmode="decimal"
         />
 
-        <label for="fromCurrency">From</label>
-        <input
-          type="text"
-          id="fromCurrency"
-          list="currencyList"
-          value="USD — US Dollar"
-          autocomplete="off"
-        />
+        <label for="fromCurrency" class="card-field-label">Currency</label>
+        <div class="input-with-icon on-card">
+          <i data-lucide="search"></i>
+          <input
+            type="text"
+            id="fromCurrency"
+            list="currencyList"
+            value="USD — US Dollar"
+            autocomplete="off"
+          />
+        </div>
 
         <div class="quick-chips">
           <button class="chip" data-amount="100">100</button>
           <button class="chip" data-amount="1000">1,000</button>
           <button class="chip" data-amount="10000">10,000</button>
         </div>
+
+        <div class="card-code-watermark" id="fromCurrencyLabel">USD</div>
       </div>
 
-      <button id="swapBtn" class="swap-btn" title="Swap currencies">⇄</button>
+      <!-- SWAP CLASP -->
+      <button id="swapBtn" class="swap-clasp" title="Swap currencies" aria-label="Swap currencies">
+        <i data-lucide="arrow-left-right"></i>
+      </button>
 
-      <div class="currency-block">
-        <label for="toCurrency">To</label>
-        <input
-          type="text"
-          id="toCurrency"
-          list="currencyList"
-          value="EUR — Euro"
-          autocomplete="off"
-        />
+      <!-- TO: BOARDING PASS TICKET -->
+      <div class="ticket">
+        <div class="ticket-main">
+          <div class="ticket-row">
+            <span class="ticket-eyebrow">
+              <i data-lucide="ticket"></i>
+              Converted
+            </span>
+            <button id="copyBtn" class="icon-btn" title="Copy result" aria-label="Copy result">
+              <i data-lucide="copy"></i>
+            </button>
+          </div>
+
+          <label for="toCurrency" class="card-field-label ticket-label">To</label>
+          <div class="input-with-icon on-ticket">
+            <i data-lucide="search"></i>
+            <input
+              type="text"
+              id="toCurrency"
+              list="currencyList"
+              value="EUR — Euro"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="ticket-amount-row">
+            <span id="resultAmount" class="ticket-amount">0.00</span>
+            <span id="toCurrencyLabel" class="ticket-currency-code">EUR</span>
+          </div>
+
+          <p id="statusMessage" class="status-message"></p>
+        </div>
+
+        <div class="ticket-perforation" aria-hidden="true"></div>
+
+        <div class="ticket-stub">
+          <div class="barcode" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
       </div>
 
       <datalist id="currencyList"></datalist>
     </section>
 
-    <!-- ===================== STATUS ===================== -->
-    <p id="statusMessage" class="status-message"></p>
-
-    <!-- ===================== FLIP BOARD ===================== -->
-    <section class="flip-board-section">
-      <div id="flipBoard" class="flip-board"></div>
-
-      <div class="board-side">
-        <span id="toCurrencyLabel" class="currency-code-label">EUR</span>
-        <button id="copyBtn" class="copy-btn" title="Copy result">📋</button>
-      </div>
-    </section>
-
-    <!-- ===================== TREND ===================== -->
-    <section class="trend-section">
-      <span class="trend-title">7-day trend</span>
+    <!-- TREND RECEIPT STRIP -->
+    <section class="receipt-strip">
+      <span class="receipt-title">
+        <i data-lucide="activity"></i>
+        7-day trend
+      </span>
       <svg id="sparkline" class="sparkline" viewBox="0 0 200 40" preserveAspectRatio="none"></svg>
-      <span id="trendChange" class="trend-change">—</span>
+      <span id="trendChange" class="trend-change">
+        <i data-lucide="minus"></i>
+        <span id="trendChangeValue">—</span>
+      </span>
     </section>
 
   </div>
 
-  <!-- ===================== FOOTER ===================== -->
+  <!-- FOOTER -->
   <footer class="app-footer">
     <p>Designed &amp; Built by <strong>Simeon A. Tarr</strong></p>
     <div class="footer-links">
-      <a href="https://github.com/SimeonATarr231" target="_blank" rel="noopener noreferrer" title="GitHub">GitHub</a>
-      <a href="#" target="_blank" rel="noopener noreferrer" title="LinkedIn">LinkedIn</a>
-      <a href="#" target="_blank" rel="noopener noreferrer" title="Portfolio">Portfolio</a>
+      <a href="https://github.com/SimeonATarr231" target="_blank" rel="noopener noreferrer" title="GitHub">
+        <i data-lucide="github"></i>
+      </a>
+      <a href="https://www.linkedin.com/in/simeon-a-tarr-0745bb339/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
+        <i data-lucide="linkedin"></i>
+      </a>
+      <a href="https://www.facebook.com/simmeek.simmeek" target="_blank" rel="noopener noreferrer" title="Facebook">
+        <i data-lucide="globe"></i>
+      </a>
     </div>
   </footer>
 
   <script src="script.js"></script>
+
+  <script>
+    lucide.createIcons();
+  </script>
 </body>
 </html>

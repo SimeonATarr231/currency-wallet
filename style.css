@@ -1,25 +1,34 @@
-/* ============ CSS VARIABLES — NIGHT BOARD (default) ============ */
+/* ENVIRONMENT THEME (the room, not the objects) */
 :root {
-  --bg-color: #14171c;
-  --panel-color: #1f242c;
-  --tile-bg: #2a2f38;
-  --tile-text: #f5c242;
-  --text-color: #e8e6df;
-  --text-muted: #8b8f97;
-  --accent-color: #4fae8e;
-  --border-color: #333944;
+  --canvas-color: #121319;
+  --panel-color: #1b1d26;
+  --text-color: #e7e5f0;
+  --text-muted: #9391a3;
+  --border-color: #2e303c;
+  --danger-color: #ef6f61;
 }
 
-/* ============ DAY BOARD ============ */
 body.day-mode {
-  --bg-color: #f0ece1;
-  --panel-color: #e4ddc9;
-  --tile-bg: #d9cfb0;
-  --tile-text: #3d2b1f;
-  --text-color: #2b2b2b;
-  --text-muted: #6b6558;
-  --accent-color: #8a6d3b;
-  --border-color: #cabf9e;
+  --canvas-color: #f4f1ea;
+  --panel-color: #ffffff;
+  --text-color: #241f1a;
+  --text-muted: #7a7268;
+  --border-color: #e2dccc;
+  --danger-color: #c9463a;
+}
+
+/* CARD / TICKET COLORS — these do NOT change with theme,
+   the same way a real plastic card doesn't change color when the room lights dim */
+:root {
+  --card-grad-start: #4338ca;
+  --card-grad-end: #7c3aed;
+  --card-text: #f5f3ff;
+  --card-muted: rgba(245, 243, 255, 0.7);
+
+  --ticket-grad-start: #f59e0b;
+  --ticket-grad-end: #ef4444;
+  --ticket-text: #fffaf0;
+  --ticket-muted: rgba(255, 250, 240, 0.75);
 }
 
 * {
@@ -33,51 +42,70 @@ body {
   flex-direction: column;
   align-items: center;
   font-family: "Manrope", sans-serif;
-  background-color: var(--bg-color);
+  background-color: var(--canvas-color);
   color: var(--text-color);
   transition: background-color 0.4s ease, color 0.4s ease;
-  padding: 24px 16px;
+  padding: 28px 16px;
 }
 
-/* ============ BOARD CASING ============ */
-.board-casing {
+.page {
   width: 100%;
-  max-width: 640px;
-  background-color: var(--panel-color);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  transition: background-color 0.4s ease, border-color 0.4s ease;
+  max-width: 760px;
 }
 
-/* ============ HEADER ============ */
-.board-header {
+svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* HEADER */
+.page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 20px;
 }
 
-.board-header h1 {
-  font-size: 1.25rem;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.brand-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--card-grad-end);
+}
+
+.page-header h1 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
   margin: 0;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .live-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--accent-color);
-  box-shadow: 0 0 6px var(--accent-color);
+  background-color: var(--card-grad-end);
+  box-shadow: 0 0 6px var(--card-grad-end);
   animation: pulse 2s infinite ease-in-out;
 }
 
@@ -87,363 +115,534 @@ body {
 }
 
 .live-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  margin-right: 8px;
+  white-space: nowrap;
 }
 
-/* ============ POWER SWITCH (Day/Night toggle) ============ */
-.power-switch {
+.theme-toggle {
   position: relative;
-  display: inline-block;
-  width: 44px;
+  width: 40px;
   height: 24px;
-}
-
-.power-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.power-slider {
-  position: absolute;
-  inset: 0;
-  background-color: var(--tile-bg);
+  border-radius: 20px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  background-color: var(--panel-color);
   cursor: pointer;
-  transition: 0.3s;
+  padding: 0;
+}
+
+.theme-toggle svg {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 13px;
+  height: 13px;
+  transition: opacity 0.2s ease;
+}
+
+.icon-sun {
+  left: 5px;
+  color: #e8b923;
+  opacity: 1;
+}
+
+.icon-moon {
+  right: 5px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+body.day-mode .icon-sun { opacity: 0.5; }
+body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
+
+/* ERROR BANNER */
+.error-banner {
   display: flex;
   align-items: center;
+  gap: 10px;
+  background-color: rgba(239, 111, 97, 0.12);
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
 }
 
-.power-icon {
-  position: absolute;
-  left: 4px;
-  font-size: 12px;
-  color: var(--tile-text);
-  transition: transform 0.3s ease;
+.error-banner svg { color: var(--danger-color); }
+.error-banner span { flex: 1; }
+
+.retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.power-switch input:checked + .power-slider .power-icon {
-  transform: translateX(20px);
-}
+.retry-btn:hover { background-color: rgba(239, 111, 97, 0.15); }
 
-/* ============ PINNED ROW ============ */
+/* PINNED ROW */
 .pinned-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding-bottom: 16px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
 }
 
 .pinned-label {
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
   color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pinned-label svg {
+  width: 13px;
+  height: 13px;
+  color: var(--card-grad-end);
 }
 
 .pinned-chips {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  flex: 1;
 }
 
 .pinned-chips .chip-pinned {
-  background-color: var(--tile-bg);
-  border: 1px solid var(--border-color);
+  background-color: var(--panel-color);
+  border: 1px dashed var(--border-color);
   color: var(--text-color);
   font-size: 0.75rem;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
 }
 
 .pinned-chips .chip-pinned:hover {
-  border-color: var(--accent-color);
+  border-color: var(--card-grad-end);
+  border-style: solid;
+  color: var(--card-grad-end);
 }
 
 .pin-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   background: none;
   border: 1px dashed var(--border-color);
   color: var(--text-muted);
   font-size: 0.75rem;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.pin-btn:hover {
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-}
+.pin-btn svg { width: 12px; height: 12px; }
+.pin-btn:hover { color: var(--card-grad-end); border-color: var(--card-grad-end); }
 
-/* ============ CONVERTER PANEL ============ */
-.converter-panel {
+/* WALLET LAYOUT */
+.wallet {
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.currency-block {
+/* DEBIT CARD */
+.debit-card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1.586 / 1;
+  border-radius: 18px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--card-grad-start), var(--card-grad-end));
+  color: var(--card-text);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 180px;
+  gap: 8px;
+  box-shadow: 0 16px 32px rgba(67, 56, 202, 0.28);
+  overflow: hidden;
 }
 
-.currency-block label {
-  font-size: 0.7rem;
+.card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-chip {
+  width: 34px;
+  height: 24px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #f5d77b, #d4a934);
+}
+
+.card-brand-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--card-muted);
+}
+
+.card-field-label {
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  color: var(--card-muted);
 }
 
-.currency-block input {
-  background-color: var(--tile-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-family: "Manrope", sans-serif;
-  font-size: 0.95rem;
+.card-amount-input {
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--card-text);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 2px 0 6px 0;
+  width: 100%;
+  letter-spacing: 0.03em;
 }
 
-.currency-block input:focus {
+.card-amount-input:focus {
   outline: none;
-  border-color: var(--accent-color);
+  border-bottom-color: var(--card-text);
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon svg {
+  position: absolute;
+  left: 0;
+  width: 13px;
+  height: 13px;
+}
+
+.input-with-icon.on-card svg { color: var(--card-muted); }
+.input-with-icon.on-ticket svg { color: var(--ticket-muted); }
+
+.input-with-icon input {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 2px 0 6px 20px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.85rem;
+}
+
+.input-with-icon.on-card input { color: var(--card-text); }
+.input-with-icon.on-ticket input { color: var(--ticket-text); }
+
+.input-with-icon input:focus {
+  outline: none;
 }
 
 .quick-chips {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .chip {
-  background: none;
-  border: 1px solid var(--border-color);
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: var(--card-text);
+  font-size: 0.68rem;
+  padding: 4px 9px;
+  border-radius: 5px;
   cursor: pointer;
+  font-family: "IBM Plex Mono", monospace;
 }
 
-.chip:hover {
-  color: var(--accent-color);
-  border-color: var(--accent-color);
+.chip:hover { background: rgba(255, 255, 255, 0.24); }
+
+.card-code-watermark {
+  position: absolute;
+  bottom: 12px;
+  right: 18px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-.swap-btn {
-  background-color: var(--tile-bg);
+/* SWAP CLASP */
+.swap-clasp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--panel-color);
   border: 1px solid var(--border-color);
-  color: var(--accent-color);
-  font-size: 1.1rem;
-  width: 38px;
-  height: 38px;
+  color: var(--text-color);
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   cursor: pointer;
-  margin-bottom: 4px;
-  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.swap-btn:hover {
+.swap-clasp:hover {
+  transform: rotate(180deg);
+  border-color: var(--card-grad-end);
+  color: var(--card-grad-end);
+}
+
+/* TICKET (BOARDING PASS) */
+.ticket {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--ticket-grad-start), var(--ticket-grad-end));
+  color: var(--ticket-text);
+  box-shadow: 0 16px 32px rgba(239, 68, 68, 0.25);
+}
+
+.ticket-main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ticket-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ticket-muted);
+}
+
+.ticket-eyebrow svg { width: 13px; height: 13px; }
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--ticket-text);
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.icon-btn:hover { background: rgba(255, 255, 255, 0.26); }
+.icon-btn.copied { background: rgba(255, 255, 255, 0.4); }
+
+.ticket-label { margin-top: 4px; }
+
+.ticket-amount-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ticket-amount {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ticket-currency-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.85rem;
+  color: var(--ticket-muted);
+}
+
+.status-message {
+  font-size: 0.72rem;
+  color: var(--ticket-muted);
+  min-height: 14px;
+  margin: 0;
+}
+
+.ticket-perforation {
+  width: 0;
+  border-left: 2px dashed rgba(255, 255, 255, 0.4);
+  position: relative;
+}
+
+.ticket-perforation::before,
+.ticket-perforation::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--canvas-color);
+  transition: background-color 0.4s ease;
+}
+
+.ticket-perforation::before { top: -8px; }
+.ticket-perforation::after { bottom: -8px; }
+
+.ticket-stub {
+  width: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.barcode {
+  display: flex;
+  gap: 2px;
+  height: 90px;
+  align-items: stretch;
   transform: rotate(180deg);
 }
 
-/* ============ STATUS ============ */
-.status-message {
-  text-align: center;
-  min-height: 18px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 4px 0 16px 0;
+.barcode span {
+  width: 2px;
+  background-color: rgba(255, 255, 255, 0.55);
 }
 
-/* ============ FLIP BOARD ============ */
-.flip-board-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 24px 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
-}
+.barcode span:nth-child(3n) { width: 3px; }
+.barcode span:nth-child(5n) { background-color: rgba(255, 255, 255, 0.3); }
+.barcode span:nth-child(7n) { width: 4px; }
 
-.flip-board {
-  display: flex;
-  gap: 4px;
-}
-
-.flip-tile {
-  width: 34px;
-  height: 52px;
-  background-color: var(--tile-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 200px;
-  overflow: hidden;
-}
-
-.flip-inner {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 700;
-  font-size: 1.6rem;
-  color: var(--tile-text);
-}
-
-.flip-tile.flipping .flip-inner {
-  animation: flipChar 300ms ease-in-out;
-}
-
-@keyframes flipChar {
-  0% { transform: rotateX(0deg); }
-  50% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
-}
-
-.board-side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.currency-code-label {
-  font-family: "IBM Plex Mono", monospace;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-}
-
-.copy-btn {
-  background-color: var(--tile-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  font-size: 1rem;
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.copy-btn:hover {
-  border-color: var(--accent-color);
-}
-
-.copy-btn.copied {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-/* ============ TREND ============ */
-.trend-section {
+/* RECEIPT STRIP */
+.receipt-strip {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-top: 16px;
+  flex-wrap: wrap;
+  background-color: var(--panel-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 18px;
 }
 
-.trend-title {
-  font-size: 0.75rem;
+.receipt-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  font-family: "IBM Plex Mono", monospace;
 }
+
+.receipt-title svg { width: 13px; height: 13px; }
 
 .sparkline {
   flex: 1;
+  min-width: 80px;
   height: 32px;
 }
 
 .sparkline path {
   fill: none;
-  stroke: var(--accent-color);
+  stroke: var(--card-grad-end);
   stroke-width: 2;
 }
 
 .trend-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.8rem;
   font-weight: 700;
   white-space: nowrap;
+  color: var(--text-muted);
 }
 
-.trend-change.up {
-  color: #4fae8e;
-}
+.trend-change svg { width: 13px; height: 13px; }
+.trend-change.up { color: #4fae8e; }
+.trend-change.down { color: var(--danger-color); }
 
-.trend-change.down {
-  color: #d9695f;
-}
-
-/* ============ FOOTER ============ */
+/* FOOTER */
 .app-footer {
   width: 100%;
-  max-width: 640px;
+  max-width: 760px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 16px 8px 0 8px;
+  padding: 18px 8px 0 8px;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
 
-.app-footer strong {
-  color: var(--accent-color);
-}
+.app-footer strong { color: var(--card-grad-end); }
 
-.footer-links {
-  display: flex;
-  gap: 14px;
-}
+.footer-links { display: flex; gap: 14px; }
+.footer-links a { color: var(--text-muted); display: flex; align-items: center; }
+.footer-links a:hover { color: var(--card-grad-end); }
 
-.footer-links a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.footer-links a:hover {
-  color: var(--accent-color);
-}
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 500px) {
-  .converter-panel {
+/* RESPONSIVE */
+@media (max-width: 680px) {
+  .wallet {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .swap-btn {
+  .debit-card {
+    aspect-ratio: auto;
+    padding: 22px;
+  }
+
+  .swap-clasp {
     align-self: center;
     transform: rotate(90deg);
   }
 
-  .swap-btn:hover {
-    transform: rotate(270deg);
+  .swap-clasp:hover { transform: rotate(270deg); }
+
+  .ticket {
+    flex-direction: row;
   }
 
-  .flip-tile {
-    width: 26px;
-    height: 42px;
-  }
+  .ticket-amount { font-size: 1.6rem; }
 
-  .flip-inner {
-    font-size: 1.2rem;
-  }
+  .live-label { display: none; }
+}
+
+@media (max-width: 380px) {
+  .page-header h1 { font-size: 1.05rem; }
+  .card-amount-input { font-size: 1.35rem; }
+  .ticket-amount { font-size: 1.35rem; }
 }

@@ -1,24 +1,28 @@
 /* ==========================================================
-   CURRENCY EXCHANGE BOARD — script.js
-   Data source: Frankfurter API (frankfurter.app) — free, no API key needed
+   CURRENCY WALLET — script.js
+   Data source: Frankfurter v1 API — api.frankfurter.dev/v1
+   Free, no API key needed.
 
    Structure:
    1. State & DOM references
-   2. Currency list loading (for the datalist search-to-filter inputs)
-   3. Conversion (Frankfurter /latest)
-   4. Historical trend (Frankfurter date-range endpoint)
-   5. Flip board rendering (the signature mechanic)
+   2. Currency list loading
+   3. Conversion (fetch rate, multiply locally)
+   4. Historical trend
+   5. Ticket amount count-up animation (the signature mechanic)
    6. Sparkline rendering
    7. Pinned pairs (localStorage)
    8. Day/Night theme toggle (localStorage)
    9. Copy to clipboard
    10. Debounce helper
-   11. Event wiring
+   11. Error banner + retry
+   12. Event wiring
    ========================================================== */
 
+const API_BASE = "https://api.frankfurter.dev/v1";
+
 /* ---------- 1. STATE & DOM REFERENCES ---------- */
-let currencyMap = {};      // { USD: "United States Dollar", EUR: "Euro", ... }
-let lastConvertedValue = "0.00";
+let currencyMap = {};
+let lastConvertedValue = 0;
 
 const fromAmountInput = document.getElementById("fromAmount");
 const fromCurrencyInput = document.getElementById("fromCurrency");
@@ -26,47 +30,58 @@ const toCurrencyInput = document.getElementById("toCurrency");
 const currencyDatalist = document.getElementById("currencyList");
 const swapBtn = document.getElementById("swapBtn");
 const statusMessage = document.getElementById("statusMessage");
-const flipBoard = document.getElementById("flipBoard");
+const resultAmount = document.getElementById("resultAmount");
+const fromCurrencyLabel = document.getElementById("fromCurrencyLabel");
 const toCurrencyLabel = document.getElementById("toCurrencyLabel");
 const copyBtn = document.getElementById("copyBtn");
 const sparkline = document.getElementById("sparkline");
 const trendChange = document.getElementById("trendChange");
+const trendChangeValue = document.getElementById("trendChangeValue");
 const pinnedChips = document.getElementById("pinnedChips");
 const pinCurrentBtn = document.getElementById("pinCurrentBtn");
 const themeToggle = document.getElementById("themeToggle");
 const quickChips = document.querySelectorAll(".chip");
+const lastUpdated = document.getElementById("lastUpdated");
+const errorBanner = document.getElementById("errorBanner");
+const errorText = document.getElementById("errorText");
+const retryBtn = document.getElementById("retryBtn");
 
 /* ---------- 2. CURRENCY LIST LOADING ---------- */
 async function loadCurrencyList() {
   try {
-    const response = await fetch("https://api.frankfurter.app/currencies");
+    const response = await fetch(`${API_BASE}/currencies`);
+    if (!response.ok) throw new Error("Could not load currency list.");
     currencyMap = await response.json();
 
     currencyDatalist.innerHTML = Object.entries(currencyMap)
       .map(([code, name]) => `<option value="${code} — ${name}">`)
       .join("");
   } catch (error) {
-    statusMessage.textContent = "Could not load currency list.";
+    console.warn("Currency list failed to load:", error.message);
   }
 }
 
-// Extracts "USD" from an input value like "USD — US Dollar"
 function extractCode(inputValue) {
   const match = inputValue.trim().match(/^[A-Za-z]{3}/);
   return match ? match[0].toUpperCase() : null;
 }
 
 /* ---------- 3. CONVERSION ---------- */
-async function convertCurrency(amount, from, to) {
-  const url = `https://api.frankfurter.app/latest?amount=${amount}&from=${from}&to=${to}`;
+async function getExchangeRate(from, to) {
+  const url = `${API_BASE}/latest?base=${from}&symbols=${to}`;
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Conversion failed. Check the currency codes and try again.");
+    throw new Error("Could not fetch that rate — check the currency codes.");
   }
 
   const data = await response.json();
-  return data.rates[to];
+
+  if (!data.rates || data.rates[to] === undefined) {
+    throw new Error(`No rate found for ${from} → ${to}.`);
+  }
+
+  return { rate: data.rates[to], date: data.date };
 }
 
 /* ---------- 4. HISTORICAL TREND (last 7 days) ---------- */
@@ -76,71 +91,53 @@ async function fetchTrend(from, to) {
   start.setDate(end.getDate() - 7);
 
   const formatDate = (d) => d.toISOString().split("T")[0];
-  const url = `https://api.frankfurter.app/${formatDate(start)}..${formatDate(end)}?from=${from}&to=${to}`;
+  const url = `${API_BASE}/${formatDate(start)}..${formatDate(end)}?base=${from}&symbols=${to}`;
 
   const response = await fetch(url);
   if (!response.ok) return [];
 
   const data = await response.json();
+  if (!data.rates) return [];
 
-  // data.rates is an object keyed by date — sort chronologically, extract values
   return Object.keys(data.rates)
     .sort()
-    .map((date) => data.rates[date][to]);
+    .map((date) => data.rates[date][to])
+    .filter((val) => val !== undefined);
 }
 
-/* ---------- 5. FLIP BOARD RENDERING (the signature mechanic) ---------- */
-function buildFlipBoard(valueString) {
-  flipBoard.innerHTML = "";
+/* ---------- 5. TICKET AMOUNT COUNT-UP ANIMATION ----------
+   Instead of a flip-tile mechanic, the ticket amount "prints" itself
+   by counting from the old value to the new one — like a receipt total
+   ticking up, or an odometer. Uses requestAnimationFrame for smooth,
+   frame-synced updates rather than setInterval. */
+function animateTicketAmount(fromValue, toValue, duration = 500) {
+  const startTime = performance.now();
 
-  [...valueString].forEach((char) => {
-    const tile = document.createElement("div");
-    tile.className = "flip-tile";
-    tile.dataset.char = char;
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
 
-    const inner = document.createElement("span");
-    inner.className = "flip-inner";
-    inner.textContent = char;
+    // ease-out cubic — starts fast, settles gently, feels less mechanical than linear
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = fromValue + (toValue - fromValue) * eased;
 
-    tile.appendChild(inner);
-    flipBoard.appendChild(tile);
-  });
-}
+    resultAmount.textContent = current.toFixed(2);
 
-function updateFlipBoard(valueString) {
-  const tiles = flipBoard.querySelectorAll(".flip-tile");
-
-  // If the digit count changed (e.g. currency amount got longer), just rebuild
-  if (tiles.length !== valueString.length) {
-    buildFlipBoard(valueString);
-    return;
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      resultAmount.textContent = toValue.toFixed(2);
+    }
   }
 
-  [...valueString].forEach((char, i) => {
-    const tile = tiles[i];
-    const inner = tile.querySelector(".flip-inner");
-
-    if (tile.dataset.char === char) return; // no change, skip animation
-
-    tile.classList.add("flipping");
-
-    // Swap the character at the midpoint of the flip animation (300ms total)
-    setTimeout(() => {
-      inner.textContent = char;
-      tile.dataset.char = char;
-    }, 150);
-
-    setTimeout(() => {
-      tile.classList.remove("flipping");
-    }, 300);
-  });
+  requestAnimationFrame(tick);
 }
 
 /* ---------- 6. SPARKLINE RENDERING ---------- */
 function renderSparkline(values) {
   if (!values || values.length < 2) {
     sparkline.innerHTML = "";
-    trendChange.textContent = "—";
+    trendChangeValue.textContent = "—";
     trendChange.className = "trend-change";
     return;
   }
@@ -151,7 +148,7 @@ function renderSparkline(values) {
 
   const points = values.map((val, i) => {
     const x = (i / (values.length - 1)) * 200;
-    const y = 32 - ((val - min) / range) * 28 - 2; // padding inside viewBox
+    const y = 32 - ((val - min) / range) * 28 - 2;
     return `${x},${y}`;
   });
 
@@ -160,8 +157,19 @@ function renderSparkline(values) {
 
   const percentChange = ((values[values.length - 1] - values[0]) / values[0]) * 100;
   const sign = percentChange >= 0 ? "+" : "";
-  trendChange.textContent = `${sign}${percentChange.toFixed(2)}%`;
-  trendChange.className = "trend-change " + (percentChange >= 0 ? "up" : "down");
+  trendChangeValue.textContent = `${sign}${percentChange.toFixed(2)}%`;
+
+  const direction = percentChange >= 0 ? "up" : "down";
+  trendChange.className = "trend-change " + direction;
+
+  const iconEl = trendChange.querySelector("svg, i");
+  if (iconEl) {
+    const newIconName = direction === "up" ? "trending-up" : "trending-down";
+    const freshIcon = document.createElement("i");
+    freshIcon.setAttribute("data-lucide", newIconName);
+    iconEl.replaceWith(freshIcon);
+    lucide.createIcons();
+  }
 }
 
 /* ---------- 7. PINNED PAIRS (localStorage) ---------- */
@@ -181,7 +189,7 @@ function renderPinnedChips() {
   pairs.forEach((pair) => {
     const chip = document.createElement("button");
     chip.className = "chip-pinned";
-    chip.textContent = `${pair.from}→${pair.to}`;
+    chip.textContent = `${pair.from} → ${pair.to}`;
     chip.addEventListener("click", () => {
       fromCurrencyInput.value = `${pair.from} — ${currencyMap[pair.from] || ""}`;
       toCurrencyInput.value = `${pair.to} — ${currencyMap[pair.to] || ""}`;
@@ -211,13 +219,11 @@ function initTheme() {
   if (saved === "day") {
     document.body.classList.add("day-mode");
     document.body.classList.remove("night-mode");
-    themeToggle.checked = true;
   }
 }
 
-themeToggle.addEventListener("change", () => {
-  const isDay = themeToggle.checked;
-  document.body.classList.toggle("day-mode", isDay);
+themeToggle.addEventListener("click", () => {
+  const isDay = document.body.classList.toggle("day-mode");
   document.body.classList.toggle("night-mode", !isDay);
   localStorage.setItem("currencyBoardTheme", isDay ? "day" : "night");
 });
@@ -225,7 +231,7 @@ themeToggle.addEventListener("change", () => {
 /* ---------- 9. COPY TO CLIPBOARD ---------- */
 copyBtn.addEventListener("click", async () => {
   const toCode = extractCode(toCurrencyInput.value);
-  const textToCopy = `${lastConvertedValue} ${toCode}`;
+  const textToCopy = `${lastConvertedValue.toFixed(2)} ${toCode}`;
 
   try {
     await navigator.clipboard.writeText(textToCopy);
@@ -245,7 +251,22 @@ function debounce(fn, delay) {
   };
 }
 
-/* ---------- 11. MAIN CONVERSION FLOW ---------- */
+/* ---------- 11. ERROR BANNER ---------- */
+function showError(message) {
+  errorText.textContent = message;
+  errorBanner.hidden = false;
+}
+
+function hideError() {
+  errorBanner.hidden = true;
+}
+
+retryBtn.addEventListener("click", () => {
+  hideError();
+  runConversion();
+});
+
+/* ---------- 12. MAIN CONVERSION FLOW ---------- */
 async function runConversion() {
   const amount = parseFloat(fromAmountInput.value);
   const from = extractCode(fromCurrencyInput.value);
@@ -256,22 +277,28 @@ async function runConversion() {
     return;
   }
 
-  statusMessage.textContent = "Converting...";
+  statusMessage.textContent = "Converting…";
+  hideError();
 
   try {
-    const result = await convertCurrency(amount, from, to);
-    const formatted = result.toFixed(2);
+    const { rate, date } = await getExchangeRate(from, to);
+    const result = amount * rate;
 
-    lastConvertedValue = formatted;
-    updateFlipBoard(formatted);
+    animateTicketAmount(lastConvertedValue, result);
+    lastConvertedValue = result;
+
+    fromCurrencyLabel.textContent = from;
     toCurrencyLabel.textContent = to;
+    lastUpdated.textContent = date ? `updated ${date}` : "live rate";
 
     statusMessage.textContent = "";
 
     const trendValues = await fetchTrend(from, to);
     renderSparkline(trendValues);
   } catch (error) {
-    statusMessage.textContent = error.message;
+    statusMessage.textContent = "";
+    lastUpdated.textContent = "offline";
+    showError(error.message || "Could not reach the exchange rate service.");
   }
 }
 
@@ -301,10 +328,9 @@ pinCurrentBtn.addEventListener("click", pinCurrentPair);
 /* ---------- INIT ---------- */
 async function init() {
   initTheme();
-  buildFlipBoard("0.00");
   renderPinnedChips();
   await loadCurrencyList();
-  runConversion();
+  await runConversion();
 }
 
 init();
