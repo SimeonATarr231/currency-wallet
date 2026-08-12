@@ -1,4 +1,4 @@
-/* ENVIRONMENT THEME (the room, not the objects) */
+/* ============ ENVIRONMENT THEME (the room, not the objects) ============ */
 :root {
   --canvas-color: #121319;
   --panel-color: #1b1d26;
@@ -17,8 +17,8 @@ body.day-mode {
   --danger-color: #c9463a;
 }
 
-/* CARD / TICKET COLORS — these do NOT change with theme,
-   the same way a real plastic card doesn't change color when the room lights dim */
+/* ============ CARD / TICKET COLORS — these do NOT change with theme,
+   the same way a real plastic card doesn't change color when the room lights dim ============ */
 :root {
   --card-grad-start: #4338ca;
   --card-grad-end: #7c3aed;
@@ -59,7 +59,7 @@ svg {
   flex-shrink: 0;
 }
 
-/* HEADER */
+/* ============ HEADER ============ */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -155,7 +155,7 @@ svg {
 body.day-mode .icon-sun { opacity: 0.5; }
 body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 
-/* ERROR BANNER */
+/* ============ ERROR BANNER ============ */
 .error-banner {
   display: flex;
   align-items: center;
@@ -188,7 +188,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 
 .retry-btn:hover { background-color: rgba(239, 111, 97, 0.15); }
 
-/* PINNED ROW */
+/* ============ PINNED ROW ============ */
 .pinned-row {
   display: flex;
   align-items: center;
@@ -253,7 +253,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 .pin-btn svg { width: 12px; height: 12px; }
 .pin-btn:hover { color: var(--card-grad-end); border-color: var(--card-grad-end); }
 
-/* WALLET LAYOUT */
+/* ============ WALLET LAYOUT ============ */
 .wallet {
   display: flex;
   align-items: center;
@@ -261,7 +261,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
   margin-bottom: 20px;
 }
 
-/* DEBIT CARD */
+/* ============ DEBIT CARD ============ */
 .debit-card {
   position: relative;
   flex: 1;
@@ -386,7 +386,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
   color: rgba(255, 255, 255, 0.55);
 }
 
-/* SWAP CLASP */
+/* ============ SWAP CLASP ============ */
 .swap-clasp {
   display: flex;
   align-items: center;
@@ -409,7 +409,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
   color: var(--card-grad-end);
 }
 
-/* TICKET (BOARDING PASS) */
+/* ============ TICKET (BOARDING PASS) ============ */
 .ticket {
   flex: 1;
   min-width: 0;
@@ -419,6 +419,15 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
   background: linear-gradient(135deg, var(--ticket-grad-start), var(--ticket-grad-end));
   color: var(--ticket-text);
   box-shadow: 0 16px 32px rgba(239, 68, 68, 0.25);
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+/* Shown while an error banner is active — signals this amount is from the
+   last successful conversion, not a fresh result, so it can't be mistaken
+   for a working conversion sitting next to a visible error. */
+.ticket.stale {
+  opacity: 0.45;
+  filter: grayscale(0.6);
 }
 
 .ticket-main {
@@ -540,7 +549,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 .barcode span:nth-child(5n) { background-color: rgba(255, 255, 255, 0.3); }
 .barcode span:nth-child(7n) { width: 4px; }
 
-/* RECEIPT STRIP */
+/* ============ RECEIPT STRIP (trend) ============ */
 .receipt-strip {
   display: flex;
   align-items: center;
@@ -593,7 +602,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 .trend-change.up { color: #4fae8e; }
 .trend-change.down { color: var(--danger-color); }
 
-/* FOOTER */
+/* ============ FOOTER ============ */
 .app-footer {
   width: 100%;
   max-width: 760px;
@@ -613,7 +622,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
 .footer-links a { color: var(--text-muted); display: flex; align-items: center; }
 .footer-links a:hover { color: var(--card-grad-end); }
 
-/* RESPONSIVE */
+/* ============ RESPONSIVE ============ */
 @media (max-width: 680px) {
   .wallet {
     flex-direction: column;

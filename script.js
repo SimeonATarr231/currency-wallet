@@ -1,7 +1,9 @@
 /* ==========================================================
    CURRENCY WALLET — script.js
-   Data source: Frankfurter v1 API — api.frankfurter.dev/v1
-   Free, no API key needed.
+   Data source: Frankfurter v2 API — api.frankfurter.dev/v2
+   Free, no API key needed. Covers 201 currencies from 84 central
+   banks (v1 only covered ~31 major/ECB currencies — v2 is the
+   one to use if you want broad coverage, e.g. LRD, NGN, GHS).
 
    Structure:
    1. State & DOM references
@@ -18,7 +20,7 @@
    12. Event wiring
    ========================================================== */
 
-const API_BASE = "https://api.frankfurter.dev/v1";
+const API_BASE = "https://api.frankfurter.dev/v2";
 
 /* ---------- 1. STATE & DOM REFERENCES ---------- */
 let currencyMap = {};
@@ -46,15 +48,23 @@ const errorBanner = document.getElementById("errorBanner");
 const errorText = document.getElementById("errorText");
 const retryBtn = document.getElementById("retryBtn");
 
-/* ---------- 2. CURRENCY LIST LOADING ---------- */
+/* ---------- 2. CURRENCY LIST LOADING ----------
+   v2's /currencies returns an ARRAY of objects, not a flat map like v1:
+   [{ iso_code: "USD", name: "United States Dollar", symbol: "$", ... }, ...]
+   so this builds currencyMap = { USD: "United States Dollar", ... } from it. */
 async function loadCurrencyList() {
   try {
     const response = await fetch(`${API_BASE}/currencies`);
     if (!response.ok) throw new Error("Could not load currency list.");
-    currencyMap = await response.json();
+    const currencyList = await response.json();
 
-    currencyDatalist.innerHTML = Object.entries(currencyMap)
-      .map(([code, name]) => `<option value="${code} — ${name}">`)
+    currencyMap = {};
+    currencyList.forEach((entry) => {
+      currencyMap[entry.iso_code] = entry.name;
+    });
+
+    currencyDatalist.innerHTML = currencyList
+      .map((entry) => `<option value="${entry.iso_code} — ${entry.name}">`)
       .join("");
   } catch (error) {
     console.warn("Currency list failed to load:", error.message);
@@ -66,43 +76,53 @@ function extractCode(inputValue) {
   return match ? match[0].toUpperCase() : null;
 }
 
-/* ---------- 3. CONVERSION ---------- */
+/* ---------- 3. CONVERSION ----------
+   v2's single-pair endpoint returns one flat object:
+   { date, base, quote, rate } — much simpler than v1's nested "rates" object. */
 async function getExchangeRate(from, to) {
-  const url = `${API_BASE}/latest?base=${from}&symbols=${to}`;
+  const url = `${API_BASE}/rate/${from}/${to}`;
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error("Could not fetch that rate — check the currency codes.");
+    // v2 returns a JSON error body on 422 (invalid code) / 404 (no data for that pair)
+    let detail = "";
+    try {
+      const errorBody = await response.json();
+      detail = errorBody.message || errorBody.error || "";
+    } catch (_) {
+      /* response wasn't JSON — ignore, fall back to generic message below */
+    }
+    throw new Error(
+      detail || `No rate available for ${from} → ${to}. Double-check both currency codes.`
+    );
   }
 
   const data = await response.json();
-
-  if (!data.rates || data.rates[to] === undefined) {
-    throw new Error(`No rate found for ${from} → ${to}.`);
-  }
-
-  return { rate: data.rates[to], date: data.date };
+  return { rate: data.rate, date: data.date };
 }
 
-/* ---------- 4. HISTORICAL TREND (last 7 days) ---------- */
+/* ---------- 4. HISTORICAL TREND (last 7 days) ----------
+   v2's /rates with from/to returns a flat ARRAY of rows, one per date:
+   [{ date, base, quote, rate }, ...] — sort by date, pull out the rate values. */
 async function fetchTrend(from, to) {
   const end = new Date();
   const start = new Date();
   start.setDate(end.getDate() - 7);
 
   const formatDate = (d) => d.toISOString().split("T")[0];
-  const url = `${API_BASE}/${formatDate(start)}..${formatDate(end)}?base=${from}&symbols=${to}`;
+  const url = `${API_BASE}/rates?from=${formatDate(start)}&to=${formatDate(end)}&base=${from}&quotes=${to}`;
 
   const response = await fetch(url);
   if (!response.ok) return [];
 
-  const data = await response.json();
-  if (!data.rates) return [];
+  const rows = await response.json();
+  if (!Array.isArray(rows)) return [];
 
-  return Object.keys(data.rates)
-    .sort()
-    .map((date) => data.rates[date][to])
-    .filter((val) => val !== undefined);
+  return rows
+    .slice()
+    .sort((a, b) => (a.date > b.date ? 1 : -1))
+    .map((row) => row.rate)
+    .filter((val) => val !== undefined && val !== null);
 }
 
 /* ---------- 5. TICKET AMOUNT COUNT-UP ANIMATION ----------
@@ -251,14 +271,18 @@ function debounce(fn, delay) {
   };
 }
 
-/* ---------- 11. ERROR BANNER ---------- */
+/* ---------- 11. ERROR BANNER ----------
+   When an error is showing, the ticket is marked "stale" (dimmed) so it's
+   never mistaken for a fresh, successful result sitting next to a live error. */
 function showError(message) {
   errorText.textContent = message;
   errorBanner.hidden = false;
+  document.querySelector(".ticket").classList.add("stale");
 }
 
 function hideError() {
   errorBanner.hidden = true;
+  document.querySelector(".ticket").classList.remove("stale");
 }
 
 retryBtn.addEventListener("click", () => {
