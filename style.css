@@ -20,10 +20,10 @@ body.day-mode {
 /* ============ CARD / TICKET COLORS — these do NOT change with theme,
    the same way a real plastic card doesn't change color when the room lights dim ============ */
 :root {
-  --card-grad-start: #4338ca;
-  --card-grad-end: #7c3aed;
-  --card-text: #f5f3ff;
-  --card-muted: rgba(245, 243, 255, 0.7);
+  --card-grad-start: #0b3d2e;
+  --card-grad-end: #22c55e;
+  --card-text: #ecfdf5;
+  --card-muted: rgba(236, 253, 245, 0.72);
 
   --ticket-grad-start: #f59e0b;
   --ticket-grad-end: #ef4444;
@@ -274,7 +274,7 @@ body.day-mode .icon-moon { opacity: 1; color: #3d2b1f; }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 16px 32px rgba(67, 56, 202, 0.28);
+  box-shadow: 0 16px 32px rgba(11, 61, 46, 0.35);
   overflow: hidden;
 }
 
